@@ -30,3 +30,5 @@ main{width:min(1050px,100%);margin:0 auto;padding:20px}.page h1{font-size:30px;m
   .signatureImg{max-width:100%!important}
   .marksList{font-size:11px!important}
 }
+
+.status-aguardando{background:#fff3cd;color:#856404}.status-em_andamento{background:#cfe2ff;color:#084298}.status-finalizado{background:#d1e7dd;color:#0f5132}.status-entregue{background:#d1e7dd;color:#0f5132}.status-cancelado{background:#f8d7da;color:#842029}

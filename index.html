@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NP Checklist Estética</title>
-<link rel="stylesheet" href="style.css?v=20260928-11">
+<link rel="stylesheet" href="style.css?v=20260928-12">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -22,6 +22,7 @@
 <label>Placa*<input id="placa" style="text-transform:uppercase" autocomplete="off"></label>
 <label>KM<input id="km" inputmode="numeric"></label>
 <label>Serviço<input id="servico" placeholder="Ex.: Lavagem detalhada"></label>
+<label>Status do serviço<select id="status"><option value="aguardando">Aguardando</option><option value="em_andamento">Em andamento</option><option value="finalizado">Finalizado</option><option value="entregue">Entregue</option><option value="cancelado">Cancelado</option></select></label>
 </div></div>
 <div class="card"><div class="sectionTitle"><div><h2>Fotos do veículo</h2><p class="muted">Tire as fotos pelo celular. Toque em uma foto para marcar avarias.</p></div></div><div class="photo-grid" id="photos"></div></div>
 <div class="card"><h2>Conferência interna</h2><div class="checks">
@@ -39,6 +40,6 @@
 </main>
 
 <div id="modal" class="modal hidden" style="display:none"><div class="modalBox"><button id="closeModalBtn" type="button" class="close">×</button><h2>Marcar avaria</h2><p class="muted">Toque no ponto exato da avaria.</p><div class="photoMarkWrap"><img id="modalImg" alt="Foto do veículo"><div id="markers"></div></div><div class="grid two"><label>Tipo<select id="tipo"><option>Risco</option><option>Amassado</option><option>Trinca</option><option>Quebra</option><option>Mancha</option><option>Outro</option></select></label><label>Descrição<input id="desc" placeholder="Ex.: risco na porta"></label></div><button id="saveMarkBtn" type="button" class="primary saveMark">Salvar marca</button></div></div>
-<script src="config.js"></script><script src="app.js?v=20260928-11"></script>
+<script src="config.js"></script><script src="app.js?v=20260928-12"></script>
 </body>
 </html>

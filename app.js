@@ -67,6 +67,10 @@ async function resetForm() {
   $("osNum").textContent = error ? "automática" : osLabel(data);
 }
 
+function statusLabel(v) {
+  const map={aguardando:"Aguardando",em_andamento:"Em andamento",finalizado:"Finalizado",entregue:"Entregue",cancelado:"Cancelado"};
+  return map[v] || (v ? String(v).replace(/_/g," ") : "Aguardando");
+}
 function setFields(c) {
   $("funcionario").value = c.funcionario || "";
   $("cliente").value = c.cliente || "";
@@ -75,6 +79,7 @@ function setFields(c) {
   $("placa").value = c.placa || "";
   $("km").value = c.km || "";
   $("servico").value = c.servico || "";
+  $("status").value = c.status || "aguardando";
   $("obs").value = c.observacoes || "";
   document.querySelectorAll(".checks input").forEach(x => x.checked = (c.itens_internos || []).includes(x.value));
 }
@@ -188,7 +193,7 @@ function formData() {
   return {
     funcionario:$("funcionario").value.trim(), cliente:$("cliente").value.trim(), telefone:$("telefone").value.trim(),
     veiculo:$("veiculo").value.trim(), placa:$("placa").value.trim().toUpperCase(), km:$("km").value.trim(),
-    servico:$("servico").value.trim(), observacoes:$("obs").value.trim(),
+    servico:$("servico").value.trim(), status:$("status").value, observacoes:$("obs").value.trim(),
     itens_internos:[...document.querySelectorAll(".checks input:checked")].map(x=>x.value)
   };
 }
@@ -203,7 +208,7 @@ async function finalizeChecklist() {
   if (!validate(d)) return;
   $("saveBtn").disabled = true;
   $("saveBtn").textContent = "Salvando...";
-  const { data:check, error } = await sb.from("checklists").insert({...d,status:"finalizado",finalized_at:new Date().toISOString()}).select().single();
+  const { data:check, error } = await sb.from("checklists").insert({...d,finalized_at:new Date().toISOString()}).select().single();
   if (error) { $("saveBtn").disabled=false; $("saveBtn").textContent="Finalizar checklist"; return alert("Erro ao salvar OS: "+error.message); }
   try {
     await saveFiles(check.id, false);
@@ -262,7 +267,7 @@ async function renderLista() {
   box.innerHTML = rows.map(x => `
     <article class="osItem">
       <div class="osItemMain">
-        <div class="osLine"><strong>OS ${osLabel(x.os_num)}</strong><span class="status">${esc(x.status||"Finalizado")}</span></div>
+        <div class="osLine"><strong>OS ${osLabel(x.os_num)}</strong><span class="status status-${esc(x.status||"aguardando")}">${esc(statusLabel(x.status||"aguardando"))}</span></div>
         <div class="osClient">${esc(x.cliente||"Sem cliente")}</div>
         <div class="osMeta">${esc(x.veiculo||"Veículo não informado")} ${x.placa?`• ${esc(x.placa)}`:""}</div>
         <div class="osMeta">Responsável: ${esc(x.funcionario||"-")}</div>
@@ -296,11 +301,11 @@ async function openChecklist(id) {
     let html = `
       <div class="detailHeader">
         <button type="button" class="secondary" data-action="back-list">← Voltar para OS</button>
-        <div class="detailHeaderInfo"><div class="detailOs">OS ${osLabel(c.os_num)}</div><span class="status">${esc(c.status||"Finalizado")}</span></div>
+        <div class="detailHeaderInfo"><div class="detailOs">OS ${osLabel(c.os_num)}</div><span class="status status-${esc(c.status||"aguardando")}">${esc(statusLabel(c.status||"aguardando"))}</span></div>
         <div class="detailActions"><button type="button" class="secondary" data-action="print-pdf">▣ Exportar PDF</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar esta OS</button></div>
       </div>
       <section class="card detailCard"><h2>Dados do atendimento</h2><div class="detailGrid">
-        ${detailField("Funcionário",c.funcionario)}${detailField("Cliente",c.cliente)}${detailField("Telefone",c.telefone)}${detailField("Veículo",c.veiculo)}${detailField("Placa",c.placa)}${detailField("KM",c.km)}${detailField("Serviço",c.servico)}
+        ${detailField("Funcionário",c.funcionario)}${detailField("Cliente",c.cliente)}${detailField("Telefone",c.telefone)}${detailField("Veículo",c.veiculo)}${detailField("Placa",c.placa)}${detailField("KM",c.km)}${detailField("Serviço",c.servico)}${detailField("Status do serviço",statusLabel(c.status))}
       </div><div class="detailLong"><b>Observações</b><p>${esc(c.observacoes)||"Nenhuma observação registrada."}</p></div></section>
       <section class="card detailCard"><h2>Conferência interna</h2><div class="checkView">${checked.length ? checked.map(v=>`<span>✓ ${esc(v)}</span>`).join("") : `<span class="muted">Nenhum item marcado.</span>`}</div></section>
       <section class="card detailCard"><div class="sectionTitle"><div><h2>Fotos e avarias</h2><p class="muted">Fotos registradas na entrada do veículo.</p></div><span class="photoCount">${photos.length} foto(s)</span></div>
