@@ -297,7 +297,7 @@ async function openChecklist(id) {
       <div class="detailHeader">
         <button type="button" class="secondary" data-action="back-list">← Voltar para OS</button>
         <div class="detailHeaderInfo"><div class="detailOs">OS ${osLabel(c.os_num)}</div><span class="status">${esc(c.status||"Finalizado")}</span></div>
-        <div class="detailActions"><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar esta OS</button></div>
+        <div class="detailActions"><button type="button" class="secondary" data-action="print-pdf">▣ Exportar PDF</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar esta OS</button></div>
       </div>
       <section class="card detailCard"><h2>Dados do atendimento</h2><div class="detailGrid">
         ${detailField("Funcionário",c.funcionario)}${detailField("Cliente",c.cliente)}${detailField("Telefone",c.telefone)}${detailField("Veículo",c.veiculo)}${detailField("Placa",c.placa)}${detailField("KM",c.km)}${detailField("Serviço",c.servico)}
@@ -321,7 +321,7 @@ async function openChecklist(id) {
     } else {
       html += `<section class="card detailCard"><h2>Assinatura do cliente</h2><p class="muted">Nenhuma assinatura registrada.</p></section>`;
     }
-    html += `<div class="detailBottomActions"><button type="button" class="secondary" data-action="back-list">← Voltar</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar OS</button></div>`;
+    html += `<div class="detailBottomActions"><button type="button" class="secondary" data-action="back-list">← Voltar</button><button type="button" class="secondary" data-action="print-pdf">▣ Exportar PDF</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar OS</button></div>`;
     $("detalheBox").innerHTML=html;
     show("detalhe");
   } catch(e) { alert("Erro ao abrir a OS: "+(e.message||e)); }
@@ -367,10 +367,11 @@ async function saveEdit() {
   if(error){$("saveBtn").disabled=false;$("saveBtn").textContent="Salvar alterações";return alert("Erro ao atualizar OS: "+error.message);}
   try {
     await saveFiles(editingId,true);
-    alert("Alterações salvas com sucesso!");
-    await openChecklist(editingId);
-  } catch(e) { alert("Os dados foram atualizados, mas ocorreu um erro nos arquivos: "+e.message); }
-  finally { $("saveBtn").disabled=false; }
+  } catch(e) {
+    console.warn("Aviso ao atualizar arquivos da OS:", e);
+  }
+  await openChecklist(editingId);
+  $("saveBtn").disabled=false;
 }
 window.salvarEdicao=saveEdit;
 
@@ -382,6 +383,7 @@ document.addEventListener("click", e => {
     const id = action.dataset.id;
     if(type==="view" || type==="detail-view") return openChecklist(id);
     if(type==="edit" || type==="detail-edit") return editChecklist(id);
+    if(type==="print-pdf") return window.print();
     if(type==="back-list") return show("lista");
   }
   const remove = e.target.closest("[data-photo-remove]");

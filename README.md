@@ -15,3 +15,7 @@ O conteúdo desta pasta pode ser publicado em um serviço de hospedagem estátic
 - checklist_photos: fotos
 - checklist_marks: avarias
 - storage bucket: checklist-files
+
+## Atualização 2026-09-28
+- Adicionado botão **Exportar PDF** na visualização da OS. Ele abre a impressão do navegador já preparada para salvar em PDF.
+- Ao editar uma OS, se a atualização principal dos dados for concluída, erros auxiliares de arquivos não interrompem a tela nem exibem a mensagem de erro ao usuário.
