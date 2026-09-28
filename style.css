@@ -32,3 +32,5 @@ main{width:min(1050px,100%);margin:0 auto;padding:20px}.page h1{font-size:30px;m
 }
 
 .status-aguardando{background:#fff3cd;color:#856404}.status-em_andamento{background:#cfe2ff;color:#084298}.status-finalizado{background:#d1e7dd;color:#0f5132}.status-entregue{background:#d1e7dd;color:#0f5132}.status-cancelado{background:#f8d7da;color:#842029}
+.deleteBtn{background:#fff0f0;color:#a31515;border:1px solid #f1caca}
+@media(max-width:650px){.osActions{grid-template-columns:1fr 1fr}.osActions .deleteBtn{grid-column:1 / -1}}

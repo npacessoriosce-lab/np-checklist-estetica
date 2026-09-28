@@ -275,6 +275,7 @@ async function renderLista() {
       <div class="osActions">
         <button type="button" class="viewBtn" data-action="view" data-id="${esc(x.id)}">👁 <span>Visualizar OS</span></button>
         <button type="button" class="editBtn" data-action="edit" data-id="${esc(x.id)}">✎ <span>Editar OS</span></button>
+        <button type="button" class="deleteBtn" data-action="delete" data-id="${esc(x.id)}">🗑 <span>Excluir OS</span></button>
       </div>
     </article>`).join("");
 }
@@ -294,6 +295,38 @@ async function loadChecklist(id) {
   }
   return {c,photos:photos||[],marks};
 }
+async function deleteChecklist(id) {
+  const ok = confirm("Tem certeza que deseja excluir esta OS?\n\nEssa ação não poderá ser desfeita.");
+  if (!ok) return;
+  try {
+    const { data: photos, error: pe } = await sb.from("checklist_photos").select("id,storage_path").eq("checklist_id", id);
+    if (pe) throw pe;
+    const photoIds = (photos || []).map(p => p.id);
+    if (photoIds.length) {
+      const { error } = await sb.from("checklist_marks").delete().in("photo_id", photoIds);
+      if (error) throw error;
+    }
+    const { data: check, error: ce } = await sb.from("checklists").select("assinatura_path").eq("id", id).single();
+    if (ce) throw ce;
+    const paths = (photos || []).map(p => p.storage_path).filter(Boolean);
+    if (check?.assinatura_path) paths.push(check.assinatura_path);
+    if (paths.length) {
+      const { error } = await sb.storage.from("checklist-files").remove(paths);
+      if (error) console.warn("Não foi possível remover algum arquivo do Storage:", error);
+    }
+    if (photoIds.length) {
+      const { error } = await sb.from("checklist_photos").delete().in("id", photoIds);
+      if (error) throw error;
+    }
+    const { error: de } = await sb.from("checklists").delete().eq("id", id);
+    if (de) throw de;
+    await renderLista();
+  } catch (e) {
+    alert("Não foi possível excluir a OS: " + (e.message || e));
+  }
+}
+window.excluirChecklist = deleteChecklist;
+
 async function openChecklist(id) {
   try {
     const {c,photos,marks} = await loadChecklist(id);
@@ -388,6 +421,7 @@ document.addEventListener("click", e => {
     const id = action.dataset.id;
     if(type==="view" || type==="detail-view") return openChecklist(id);
     if(type==="edit" || type==="detail-edit") return editChecklist(id);
+    if(type==="delete") return deleteChecklist(id);
     if(type==="print-pdf") return window.print();
     if(type==="back-list") return show("lista");
   }
