@@ -1,41 +1,44 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>NP Checklist Estética</title>
-<link rel="stylesheet" href="style.css?v=20260928-6">
+<link rel="stylesheet" href="style.css?v=20260928-10">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <header><div class="brand">NP <span>CHECKLIST</span></div><div id="online">Conectando...</div></header>
-<nav><button onclick="novoChecklist()">+ Novo checklist</button><button onclick="show('lista')">Checklists</button></nav>
+<nav><button id="newBtn" class="navBtn">+ Novo checklist</button><button id="listBtn" class="navBtn">Checklists salvos</button></nav>
 <main>
 <section id="novo" class="page">
 <h1 id="formTitle">Novo checklist</h1>
-<div class="card"><div class="os">OS <strong id="osNum">—</strong></div>
+<div class="card"><div class="os">Número da OS <strong id="osNum">—</strong></div>
 <div class="grid">
-<label>Funcionário responsável*<input id="funcionario"></label>
-<label>Cliente*<input id="cliente"></label>
+<label>Funcionário responsável*<input id="funcionario" autocomplete="off"></label>
+<label>Cliente*<input id="cliente" autocomplete="off"></label>
 <label>Telefone<input id="telefone" inputmode="tel"></label>
 <label>Veículo<input id="veiculo" placeholder="Ex.: Corolla XEi"></label>
-<label>Placa*<input id="placa" style="text-transform:uppercase"></label>
+<label>Placa*<input id="placa" style="text-transform:uppercase" autocomplete="off"></label>
 <label>KM<input id="km" inputmode="numeric"></label>
 <label>Serviço<input id="servico" placeholder="Ex.: Lavagem detalhada"></label>
 </div></div>
-<div class="card"><h2>Fotos do veículo</h2><p class="muted">Tire fotos reais. Depois toque na foto para marcar avarias.</p><div class="photo-grid" id="photos"></div></div>
+<div class="card"><div class="sectionTitle"><div><h2>Fotos do veículo</h2><p class="muted">Tire as fotos pelo celular. Toque em uma foto para marcar avarias.</p></div></div><div class="photo-grid" id="photos"></div></div>
 <div class="card"><h2>Conferência interna</h2><div class="checks">
 <label><input type="checkbox" value="Bancos"> Bancos</label><label><input type="checkbox" value="Painel"> Painel</label>
 <label><input type="checkbox" value="Tapetes"> Tapetes</label><label><input type="checkbox" value="Porta-malas"> Porta-malas</label>
 <label><input type="checkbox" value="Objetos pessoais"> Objetos pessoais</label><label><input type="checkbox" value="Combustível"> Combustível</label>
 </div><label>Observações<textarea id="obs"></textarea></label></div>
-<div class="card"><h2>Assinatura do cliente</h2><canvas id="sign" width="900" height="250"></canvas><button class="secondary" onclick="clearSign()">Limpar assinatura</button></div>
-<button id="saveBtn" class="primary big" onclick="finalizar()">Finalizar checklist</button>
+<div class="card"><h2>Assinatura do cliente</h2><canvas id="sign" width="900" height="250"></canvas><button id="clearSignBtn" type="button" class="secondary">Limpar assinatura</button></div>
+<button id="saveBtn" type="button" class="primary big">Finalizar checklist</button>
 </section>
-<section id="lista" class="page hidden"><h1>Checklists salvos</h1><input id="busca" placeholder="Buscar por OS, cliente, placa ou funcionário" oninput="renderLista()"><div id="listaBox"></div></section>
-<section id="detalhe" class="page hidden"><button class="secondary" onclick="show('lista')">← Voltar</button><div id="detalheBox"></div></section>
+
+<section id="lista" class="page hidden"><div class="listHead"><div><h1>Checklists salvos</h1><p class="muted">Abra uma OS para visualizar tudo ou editar os dados.</p></div></div><input id="busca" class="search" placeholder="Buscar OS, cliente, placa, veículo ou funcionário"><div id="listaBox"></div></section>
+
+<section id="detalhe" class="page hidden"><div id="detalheBox"></div></section>
 </main>
-<div id="modal" class="modal hidden" style="display:none"><div class="modalBox"><button class="close" onclick="fecharModal()">×</button><h2>Marcar avaria</h2><p class="muted">Toque no ponto exato da avaria.</p><div class="photoMarkWrap"><img id="modalImg"><div id="markers"></div></div>
-<div class="grid two"><label>Tipo<select id="tipo"><option>Risco</option><option>Amassado</option><option>Trinca</option><option>Quebra</option><option>Mancha</option><option>Outro</option></select></label><label>Descrição<input id="desc"></label></div>
-<button class="primary" onclick="salvarMarca()">Salvar marca</button></div></div>
-<script src="config.js"></script><script src="app.js?v=20260928-6"></script>
-</body></html>
+
+<div id="modal" class="modal hidden" style="display:none"><div class="modalBox"><button id="closeModalBtn" type="button" class="close">×</button><h2>Marcar avaria</h2><p class="muted">Toque no ponto exato da avaria.</p><div class="photoMarkWrap"><img id="modalImg" alt="Foto do veículo"><div id="markers"></div></div><div class="grid two"><label>Tipo<select id="tipo"><option>Risco</option><option>Amassado</option><option>Trinca</option><option>Quebra</option><option>Mancha</option><option>Outro</option></select></label><label>Descrição<input id="desc" placeholder="Ex.: risco na porta"></label></div><button id="saveMarkBtn" type="button" class="primary saveMark">Salvar marca</button></div></div>
+<script src="config.js"></script><script src="app.js?v=20260928-10"></script>
+</body>
+</html>
