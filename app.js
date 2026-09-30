@@ -147,13 +147,13 @@ function renderMarkers() {
 
 function pointFromEvent(e) {
   if (activePhoto === null || !currentPhotos[activePhoto]) return null;
-  const layer = $("tapLayer");
+  const stage = $("imageStage");
   const img = $("modalImg");
-  if (!layer || !img || !img.naturalWidth) return null;
-  const r = layer.getBoundingClientRect();
+  if (!stage || !img || !img.complete || !img.naturalWidth) return null;
+  const r = stage.getBoundingClientRect();
   if (!r.width || !r.height) return null;
-  const px = Number(e.clientX);
-  const py = Number(e.clientY);
+  const px = e.clientX;
+  const py = e.clientY;
   if (!Number.isFinite(px) || !Number.isFinite(py)) return null;
   if (px < r.left || px > r.right || py < r.top || py > r.bottom) return null;
   return {
@@ -163,11 +163,21 @@ function pointFromEvent(e) {
 }
 
 function markImagePointer(e) {
-  if (e.type === "pointerdown" && e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.type === "pointerdown" && e.button !== 0) return;
+  if (e.cancelable) e.preventDefault();
+  e.stopPropagation();
   const point = pointFromEvent(e);
   if (!point) return;
-  e.preventDefault();
-  e.stopPropagation();
+  pendingPoint = point;
+  renderMarkers();
+}
+
+function markImageTouch(e) {
+  if (!e.changedTouches || !e.changedTouches[0]) return;
+  const t = e.changedTouches[0];
+  const point = pointFromEvent({clientX:t.clientX, clientY:t.clientY});
+  if (!point) return;
+  if (e.cancelable) e.preventDefault();
   pendingPoint = point;
   renderMarkers();
 }
@@ -430,15 +440,23 @@ $("saveBtn").addEventListener("click",finalizeChecklist);
 $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
+const modalImg = $("modalImg");
+if (modalImg) {
+  modalImg.addEventListener("pointerdown", markImagePointer, {passive:false});
+  modalImg.addEventListener("click", markImagePointer);
+  modalImg.addEventListener("touchend", markImageTouch, {passive:false});
+  modalImg.addEventListener("load", renderMarkers);
+  modalImg.style.touchAction = "none";
+}
 const tapLayer = $("tapLayer");
 if (tapLayer) {
+  tapLayer.style.pointerEvents = "auto";
+  tapLayer.style.touchAction = "none";
   tapLayer.addEventListener("pointerdown", markImagePointer, {passive:false});
-  tapLayer.addEventListener("pointerup", markImagePointer, {passive:false});
   tapLayer.addEventListener("click", markImagePointer);
+  tapLayer.addEventListener("touchend", markImageTouch, {passive:false});
 }
-$("modalImg").addEventListener("load", renderMarkers);
 window.addEventListener("resize",()=>{ if(!$("modal").classList.contains("hidden")) renderMarkers(); });
-$("modalImg").style.touchAction = "none";
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
 
