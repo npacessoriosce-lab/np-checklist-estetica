@@ -34,3 +34,101 @@ main{width:min(1050px,100%);margin:0 auto;padding:20px}.page h1{font-size:30px;m
 .status-aguardando{background:#fff3cd;color:#856404}.status-em_andamento{background:#cfe2ff;color:#084298}.status-finalizado{background:#d1e7dd;color:#0f5132}.status-entregue{background:#d1e7dd;color:#0f5132}.status-cancelado{background:#f8d7da;color:#842029}
 .deleteBtn{background:#fff0f0;color:#a31515;border:1px solid #f1caca}
 @media(max-width:650px){.osActions{grid-template-columns:1fr 1fr}.osActions .deleteBtn{grid-column:1 / -1}}
+
+/* Impressão da OS - layout compacto */
+@media print{
+  .detailHeader{margin-bottom:4mm!important}
+  .detailHeaderInfo{gap:6px!important}
+  .detailOs{font-size:18px!important}
+
+  .detailCard{
+    margin-bottom:3mm!important;
+    padding:7px!important;
+    border-radius:6px!important;
+  }
+  .detailCard h2{
+    font-size:12px!important;
+    margin:0 0 4px!important;
+  }
+
+  /* Dados do atendimento mais compacto */
+  .detailGrid{
+    gap:3px!important;
+  }
+  .detailField{
+    padding:4px 6px!important;
+    border-radius:5px!important;
+    font-size:9px!important;
+  }
+  .detailField small{
+    font-size:8px!important;
+    margin-bottom:1px!important;
+  }
+  .detailField strong{
+    font-size:9px!important;
+  }
+  .detailLong{
+    margin-top:4px!important;
+    padding:5px 6px!important;
+    font-size:9px!important;
+  }
+  .detailLong p{
+    margin:2px 0 0!important;
+  }
+
+  /* Fotos menores para reduzir o número de páginas */
+  .detailGallery{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    gap:3mm!important;
+  }
+  .detailPhoto{
+    font-size:9px!important;
+  }
+  .photoView{
+    border-radius:5px!important;
+  }
+  .photoView img{
+    width:100%!important;
+    height:50mm!important;
+    max-height:50mm!important;
+    object-fit:contain!important;
+  }
+  .photoTitle{
+    font-size:9px!important;
+    margin-top:3px!important;
+  }
+  .marksList{
+    margin-top:2px!important;
+  }
+  .markrow{
+    padding:3px 0!important;
+    font-size:8px!important;
+  }
+  .noMark{
+    padding:3px 0!important;
+    font-size:8px!important;
+  }
+
+  /* Assinatura manual: somente uma linha pequena */
+  .signatureCard{
+    padding:6px 8px!important;
+    margin-top:2mm!important;
+  }
+  .signatureCard .signatureImg,
+  .signatureCard .muted{
+    display:none!important;
+  }
+  .signatureCard h2{
+    margin-bottom:8mm!important;
+  }
+  .signatureCard::after{
+    content:"Assinatura do cliente";
+    display:block!important;
+    width:75mm;
+    max-width:75%;
+    border-top:1px solid #111;
+    padding-top:2mm;
+    font-size:8px;
+    line-height:1;
+  }
+}

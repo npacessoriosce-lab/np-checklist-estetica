@@ -355,9 +355,9 @@ async function openChecklist(id) {
     html += `</div></section>`;
     if (c.assinatura_path) {
       const {data:u} = sb.storage.from("checklist-files").getPublicUrl(c.assinatura_path);
-      html += `<section class="card detailCard"><h2>Assinatura do cliente</h2><img class="signatureImg" src="${u.publicUrl}" alt="Assinatura do cliente"></section>`;
+      html += `<section class="card detailCard signatureCard"><h2>Assinatura do cliente</h2><img class="signatureImg" src="${u.publicUrl}" alt="Assinatura do cliente"></section>`;
     } else {
-      html += `<section class="card detailCard"><h2>Assinatura do cliente</h2><p class="muted">Nenhuma assinatura registrada.</p></section>`;
+      html += `<section class="card detailCard signatureCard"><h2>Assinatura do cliente</h2><p class="muted">Nenhuma assinatura registrada.</p></section>`;
     }
     html += `<div class="detailBottomActions"><button type="button" class="secondary" data-action="back-list">← Voltar</button><button type="button" class="secondary" data-action="print-pdf">▣ Exportar PDF</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar OS</button></div>`;
     $("detalheBox").innerHTML=html;
