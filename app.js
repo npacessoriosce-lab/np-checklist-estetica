@@ -159,22 +159,37 @@ function renderMarkers() {
 }
 function markImagePointer(e) {
   if (activePhoto === null) return;
-  e.preventDefault();
+  if (e.cancelable) e.preventDefault();
+  if (e.stopPropagation) e.stopPropagation();
+
   const wrap = $("photoMarkWrap");
   const img = $("modalImg");
-  if (!img.naturalWidth || !img.naturalHeight) return;
+  if (!wrap || !img || !img.naturalWidth || !img.naturalHeight) return;
+
   const wr = wrap.getBoundingClientRect();
   const ir = img.getBoundingClientRect();
+
+  // O elemento <img> usa object-fit: contain. Calculamos exatamente onde
+  // a imagem real está desenhada dentro da caixa preta.
   const scale = Math.min(ir.width / img.naturalWidth, ir.height / img.naturalHeight);
-  const contentW = img.naturalWidth * scale, contentH = img.naturalHeight * scale;
+  const contentW = img.naturalWidth * scale;
+  const contentH = img.naturalHeight * scale;
   const left = ir.left - wr.left + (ir.width - contentW) / 2;
   const top = ir.top - wr.top + (ir.height - contentH) / 2;
-  const px = e.clientX - wr.left, py = e.clientY - wr.top;
-  if (px < left || px > left + contentW || py < top || py > top + contentH) return;
+
+  let px = e.clientX - wr.left;
+  let py = e.clientY - wr.top;
+
+  // Se o toque cair fora da imagem real (nas barras pretas), não ignora o
+  // toque: aproxima para a borda da imagem. Dentro da foto, não altera nada.
+  px = Math.max(left, Math.min(left + contentW, px));
+  py = Math.max(top, Math.min(top + contentH, py));
+
   pendingPoint = {
-    x: ((px - left) / contentW) * 100,
-    y: ((py - top) / contentH) * 100
+    x: Math.max(0, Math.min(100, ((px - left) / contentW) * 100)),
+    y: Math.max(0, Math.min(100, ((py - top) / contentH) * 100))
   };
+
   renderMarkers();
 }
 function saveMark() {
@@ -425,8 +440,15 @@ $("saveBtn").addEventListener("click",finalizeChecklist);
 $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
-$("photoMarkWrap").addEventListener("pointerdown", markImagePointer, {passive:false});
-$("modalImg").addEventListener("load", () => { syncMarkerLayer(); renderMarkers(); });
+const markArea = $("photoMarkWrap");
+const markImage = $("modalImg");
+// Captura em vários eventos para funcionar de forma consistente em Android,
+// iPhone e desktop, inclusive quando o navegador trata a imagem como elemento arrastável.
+markArea.addEventListener("pointerdown", markImagePointer, {passive:false, capture:true});
+markArea.addEventListener("touchstart", markImagePointer, {passive:false, capture:true});
+markArea.addEventListener("click", markImagePointer, {passive:false, capture:true});
+markImage.addEventListener("dragstart", e => e.preventDefault());
+markImage.addEventListener("load", () => { syncMarkerLayer(); renderMarkers(); });
 window.addEventListener("resize", () => { if (activePhoto !== null) { syncMarkerLayer(); renderMarkers(); } });
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
