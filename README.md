@@ -1,3 +1,24 @@
-# NP Checklist Estética — correção definitiva da marcação de avarias
+# NP Checklist Estética — versão ONLINE
 
-Baseada na versão atual do sistema. Corrigida a captura do ponto na foto usando pointerdown, touchstart e click em modo de captura, com cálculo da área real da imagem e fallback para barras pretas.
+Conectado ao projeto Supabase separado `NP Checklist Estetica`.
+
+Não há login de funcionário: o responsável é informado no próprio checklist.
+
+## Atenção
+A `Publishable key` usada no `config.js` é própria para uso no navegador. Não coloque uma Secret/Service Role key no frontend.
+
+## Hospedagem
+O conteúdo desta pasta pode ser publicado em um serviço de hospedagem estática, como GitHub Pages, Vercel ou Netlify. O banco e os arquivos ficam no Supabase.
+
+## Estrutura
+- checklists: OS, cliente, veículo, funcionário, assinatura etc.
+- checklist_photos: fotos
+- checklist_marks: avarias
+- storage bucket: checklist-files
+
+## Atualização 2026-09-28
+- Adicionado botão **Exportar PDF** na visualização da OS. Ele abre a impressão do navegador já preparada para salvar em PDF.
+- Ao editar uma OS, se a atualização principal dos dados for concluída, erros auxiliares de arquivos não interrompem a tela nem exibem a mensagem de erro ao usuário.
+
+
+Status do serviço: Aguardando, Em andamento, Finalizado, Entregue ou Cancelado. O campo usa a coluna status já existente na tabela checklists.
