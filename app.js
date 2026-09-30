@@ -147,11 +147,14 @@ function renderMarkers() {
 
 function pointFromEvent(e) {
   if (activePhoto === null || !currentPhotos[activePhoto]) return null;
+  const layer = $("tapLayer");
   const img = $("modalImg");
-  if (!img || !img.naturalWidth || !img.clientWidth || !img.clientHeight) return null;
-  const r = img.getBoundingClientRect();
-  const px = e.clientX;
-  const py = e.clientY;
+  if (!layer || !img || !img.naturalWidth) return null;
+  const r = layer.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  const px = Number(e.clientX);
+  const py = Number(e.clientY);
+  if (!Number.isFinite(px) || !Number.isFinite(py)) return null;
   if (px < r.left || px > r.right || py < r.top || py > r.bottom) return null;
   return {
     x: Math.max(0, Math.min(100, ((px - r.left) / r.width) * 100)),
@@ -160,10 +163,11 @@ function pointFromEvent(e) {
 }
 
 function markImagePointer(e) {
-  if (e.pointerType === "mouse" && e.button !== 0) return;
+  if (e.type === "pointerdown" && e.pointerType === "mouse" && e.button !== 0) return;
   const point = pointFromEvent(e);
   if (!point) return;
   e.preventDefault();
+  e.stopPropagation();
   pendingPoint = point;
   renderMarkers();
 }
@@ -426,9 +430,13 @@ $("saveBtn").addEventListener("click",finalizeChecklist);
 $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
-$("modalImg").addEventListener("click",markImageClick);
-$("photoMarkWrap").addEventListener("pointerdown",markImagePointer);
-$("modalImg").addEventListener("pointerdown",markImagePointer);
+const tapLayer = $("tapLayer");
+if (tapLayer) {
+  tapLayer.addEventListener("pointerdown", markImagePointer, {passive:false});
+  tapLayer.addEventListener("pointerup", markImagePointer, {passive:false});
+  tapLayer.addEventListener("click", markImagePointer);
+}
+$("modalImg").addEventListener("load", renderMarkers);
 window.addEventListener("resize",()=>{ if(!$("modal").classList.contains("hidden")) renderMarkers(); });
 $("modalImg").style.touchAction = "none";
 $("busca").addEventListener("input",renderLista);
