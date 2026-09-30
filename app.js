@@ -124,83 +124,83 @@ function openMarkModal(index) {
   if (!p) return;
   activePhoto = index;
   pendingPoint = null;
-  $("modalImg").src = p.data;
   $("desc").value = "";
   $("tipo").value = "Risco";
-  renderMarkers();
-  $("modal").classList.remove("hidden");
-  $("modal").style.display = "flex";
+  const modal = $("modal");
+  modal.classList.remove("hidden");
+  modal.style.display = "flex";
+  drawPhotoCanvas(p.data);
 }
-function syncMarkerLayer() {
+
+function drawPhotoCanvas(src) {
+  const canvas = $("photoCanvas");
   const wrap = $("photoMarkWrap");
-  const img = $("modalImg");
-  const layer = $("markers");
-  if (!wrap || !img || !layer || !img.naturalWidth || !img.naturalHeight) return null;
-  const wr = wrap.getBoundingClientRect();
-  const ir = img.getBoundingClientRect();
-  const iw = img.naturalWidth, ih = img.naturalHeight;
-  const boxW = ir.width, boxH = ir.height;
-  const scale = Math.min(boxW / iw, boxH / ih);
-  const contentW = iw * scale, contentH = ih * scale;
-  const left = (boxW - contentW) / 2;
-  const top = (boxH - contentH) / 2;
-  layer.style.left = `${ir.left - wr.left + left}px`;
-  layer.style.top = `${ir.top - wr.top + top}px`;
-  layer.style.width = `${contentW}px`;
-  layer.style.height = `${contentH}px`;
-  return {left: ir.left - wr.left + left, top: ir.top - wr.top + top, width: contentW, height: contentH};
+  if (!canvas || !wrap) return;
+  const img = new Image();
+  img.onload = () => {
+    const maxW = Math.max(260, Math.min(wrap.clientWidth || 900, 900));
+    const maxH = Math.max(260, Math.min(window.innerHeight * 0.48, 620));
+    const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight, 1);
+    canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+    canvas.style.width = canvas.width + "px";
+    canvas.style.height = canvas.height + "px";
+    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+    renderMarkers();
+  };
+  img.onerror = () => alert("Não foi possível carregar a foto para marcação.");
+  img.src = src;
 }
+
 function renderMarkers() {
   if (activePhoto === null || !currentPhotos[activePhoto]) return;
-  const marks = currentPhotos[activePhoto].marks || [];
   const layer = $("markers");
-  syncMarkerLayer();
-  layer.innerHTML = marks.map(m => `<span class="dot" style="left:${m.x}%;top:${m.y}%"></span>`).join("") + (pendingPoint ? `<span class="dot pending" style="left:${pendingPoint.x}%;top:${pendingPoint.y}%"></span>` : "");
+  const canvas = $("photoCanvas");
+  if (!layer || !canvas) return;
+  layer.innerHTML = "";
+  const marks = currentPhotos[activePhoto].marks || [];
+  for (const m of marks) {
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.left = m.x + "%";
+    dot.style.top = m.y + "%";
+    layer.appendChild(dot);
+  }
+  if (pendingPoint) {
+    const dot = document.createElement("span");
+    dot.className = "dot pending";
+    dot.style.left = pendingPoint.x + "%";
+    dot.style.top = pendingPoint.y + "%";
+    layer.appendChild(dot);
+  }
+  layer.style.left = canvas.offsetLeft + "px";
+  layer.style.top = canvas.offsetTop + "px";
+  layer.style.width = canvas.clientWidth + "px";
+  layer.style.height = canvas.clientHeight + "px";
 }
+
 function markImagePointer(e) {
   if (activePhoto === null) return;
   if (e.cancelable) e.preventDefault();
-  if (e.stopPropagation) e.stopPropagation();
-
-  const wrap = $("photoMarkWrap");
-  const img = $("modalImg");
-  if (!wrap || !img || !img.naturalWidth || !img.naturalHeight) return;
-
-  // Use ONLY Pointer Events here. They provide clientX/clientY consistently
-  // for mouse, touch and stylus. The old touchstart handler could produce
-  // undefined coordinates and leave the modal in a broken state.
-  const clientX = Number(e.clientX);
-  const clientY = Number(e.clientY);
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
-
-  const ir = img.getBoundingClientRect();
-  const naturalW = img.naturalWidth;
-  const naturalH = img.naturalHeight;
-
-  // object-fit: contain: calculate the real visible image rectangle,
-  // excluding the black letterbox bars.
-  const scale = Math.min(ir.width / naturalW, ir.height / naturalH);
-  const contentW = naturalW * scale;
-  const contentH = naturalH * scale;
-  const contentLeft = ir.left + (ir.width - contentW) / 2;
-  const contentTop = ir.top + (ir.height - contentH) / 2;
-
-  // Ignore taps outside the actual photo instead of placing a marker in
-  // the black bars.
-  if (clientX < contentLeft || clientX > contentLeft + contentW ||
-      clientY < contentTop || clientY > contentTop + contentH) return;
-
-  pendingPoint = {
-    x: Math.max(0, Math.min(100, ((clientX - contentLeft) / contentW) * 100)),
-    y: Math.max(0, Math.min(100, ((clientY - contentTop) / contentH) * 100))
-  };
-
+  e.stopPropagation();
+  const canvas = $("photoCanvas");
+  if (!canvas || !canvas.width || !canvas.height) return;
+  const r = canvas.getBoundingClientRect();
+  const x = ((e.clientX - r.left) / r.width) * 100;
+  const y = ((e.clientY - r.top) / r.height) * 100;
+  if (!Number.isFinite(x) || !Number.isFinite(y) || x < 0 || x > 100 || y < 0 || y > 100) return;
+  pendingPoint = {x, y};
   renderMarkers();
 }
 
 function saveMark() {
-  if (activePhoto === null || !pendingPoint) return alert("Toque no ponto exato da avaria na foto.");
-  currentPhotos[activePhoto].marks.push({ x:pendingPoint.x, y:pendingPoint.y, type:$("tipo").value, desc:$("desc").value.trim() });
+  if (activePhoto === null || !pendingPoint) {
+    alert("Toque na foto para marcar o ponto da avaria.");
+    return;
+  }
+  const p = currentPhotos[activePhoto];
+  p.marks = p.marks || [];
+  p.marks.push({x: pendingPoint.x, y: pendingPoint.y, type: $("tipo").value, desc: $("desc").value.trim()});
   renderPhoto(activePhoto);
   closeModal();
 }
@@ -447,13 +447,12 @@ $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
 const markArea = $("photoMarkWrap");
-const markImage = $("modalImg");
-// A single Pointer Events handler is used for mouse, touch and stylus.
-// This avoids the touchstart/click conflict that was freezing the modal.
-markArea.addEventListener("pointerdown", markImagePointer, {passive:false});
-markImage.addEventListener("dragstart", e => e.preventDefault());
-markImage.addEventListener("load", () => { syncMarkerLayer(); renderMarkers(); });
-window.addEventListener("resize", () => { if (activePhoto !== null) { syncMarkerLayer(); renderMarkers(); } });
+const markCanvas = $("photoCanvas");
+// A única área que recebe o toque é o canvas da foto.
+// Isso elimina conflito entre imagem, camada e eventos de toque.
+markCanvas.addEventListener("pointerdown", markImagePointer, {passive:false});
+markCanvas.addEventListener("contextmenu", e => e.preventDefault());
+window.addEventListener("resize", () => { if (activePhoto !== null && currentPhotos[activePhoto]) drawPhotoCanvas(currentPhotos[activePhoto].data); });
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
 
