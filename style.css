@@ -22,15 +22,69 @@ main{width:min(1050px,100%);margin:0 auto;padding:20px}.page h1{font-size:30px;m
   .detailHeader{display:block!important;border:0!important;padding:0!important;margin:0 0 12mm!important;background:#fff!important}
   .detailHeaderInfo{display:flex!important;justify-content:space-between!important}
   .detailOs{font-size:24px!important}
-  .detailCard{break-inside:avoid;page-break-inside:avoid;box-shadow:none!important;border:1px solid #ccc!important;margin-bottom:8mm!important}
-  .detailGallery{grid-template-columns:1fr 1fr!important}
+  .detailCard{break-inside:avoid;page-break-inside:avoid;box-shadow:none!important;border:1px solid #cfcfcf!important;margin-bottom:4mm!important;padding:4mm!important;border-radius:3mm!important}
+  .detailCard h2{font-size:13px!important;margin:0 0 4px!important}
+  .detailGrid{grid-template-columns:repeat(4,1fr)!important;gap:3mm!important}
+  .detailField{padding:2.5mm!important;border-radius:2mm!important;font-size:9px!important}
+  .detailField small{font-size:7px!important;margin-bottom:1mm!important}
+  .detailField strong{font-size:9px!important}
+  .detailLong{margin-top:2mm!important;padding:2.5mm!important;font-size:9px!important}
+  .detailLong p{margin:1mm 0 0!important}
+  .checkView{gap:4px!important}
+  .checkView span{padding:4px 6px!important;font-size:9px!important}
+  .detailGallery{grid-template-columns:repeat(3,1fr)!important;gap:3mm!important}
   .detailPhoto{break-inside:avoid;page-break-inside:avoid}
-  .photoView{break-inside:avoid;page-break-inside:avoid}
-  .photoView img{max-height:none!important;width:100%!important}
-  .signatureImg{max-width:100%!important}
-  .marksList{font-size:11px!important}
+  .photoView{break-inside:avoid;page-break-inside:avoid;border-radius:2mm!important}
+  .photoView img{height:48mm!important;max-height:48mm!important;width:100%!important;object-fit:cover!important}
+  .photoTitle{font-size:9px!important;margin-top:2px!important}
+  .marksList{font-size:8px!important;margin-top:1px!important}
+  .markrow{padding:2px 0!important;font-size:8px!important}
+  .muted.noMark{font-size:8px!important;padding:2px 0!important}
+  .signaturePrint{display:block!important}
 }
 
 .status-aguardando{background:#fff3cd;color:#856404}.status-em_andamento{background:#cfe2ff;color:#084298}.status-finalizado{background:#d1e7dd;color:#0f5132}.status-entregue{background:#d1e7dd;color:#0f5132}.status-cancelado{background:#f8d7da;color:#842029}
 .deleteBtn{background:#fff0f0;color:#a31515;border:1px solid #f1caca}
 @media(max-width:650px){.osActions{grid-template-columns:1fr 1fr}.osActions .deleteBtn{grid-column:1 / -1}}
+
+/* Cabeçalho e assinatura para impressão */
+.printHeader{display:none}
+.signatureLine{height:16mm;border-bottom:1px solid #222;margin:3mm 18% 1mm}
+.signatureCaption{text-align:center;font-size:9px}
+
+@media print{
+  @page{size:A4 portrait;margin:8mm}
+  body{font-family:Arial,Helvetica,sans-serif!important}
+  .printHeader{display:grid!important;grid-template-columns:24mm 1fr auto;align-items:center;gap:5mm;margin:0 0 5mm;padding-bottom:3mm;border-bottom:1px solid #222}
+  .printLogo{display:block!important;width:24mm;height:auto;max-height:15mm;object-fit:contain}
+  .printTitle{display:flex;flex-direction:column;gap:1mm;text-align:center}
+  .printTitle strong{font-size:14pt;line-height:1.05}
+  .printTitle span{font-size:8.5pt}
+  .printOs{display:flex;flex-direction:column;align-items:flex-end;gap:1mm;white-space:nowrap}
+  .printOs strong{font-size:13pt}
+  .printOs span{font-size:7.5pt}
+  .detailHeader{display:none!important}
+  .detailCard{padding:2.5mm!important;margin-bottom:3mm!important;border-radius:2mm!important}
+  .detailCard h2{font-size:10.5pt!important;margin:0 0 2mm!important}
+  .detailGrid{grid-template-columns:repeat(5,1fr)!important;gap:2mm!important}
+  .detailField{padding:1.8mm!important;border-radius:1.5mm!important}
+  .detailField small{font-size:6.5pt!important;margin-bottom:.6mm!important}
+  .detailField strong{font-size:8pt!important}
+  .detailLong{margin-top:1.5mm!important;padding:1.8mm!important;font-size:7.5pt!important}
+  .detailLong p{margin:.6mm 0 0!important}
+  .checkView{gap:2mm!important}
+  .checkView span{padding:2mm 3mm!important;font-size:7.5pt!important}
+  .detailGallery{grid-template-columns:repeat(3,1fr)!important;gap:2.5mm!important}
+  .detailPhoto{break-inside:avoid!important;page-break-inside:avoid!important}
+  .photoView{border-radius:1.5mm!important}
+  .photoView img{height:42mm!important;max-height:42mm!important;object-fit:cover!important}
+  .photoTitle{font-size:7.5pt!important;margin-top:1mm!important}
+  .marksList{margin-top:.5mm!important}
+  .markrow{padding:1mm 0!important;font-size:7pt!important}
+  .muted.noMark{font-size:7pt!important;padding:1mm 0!important}
+  .signaturePrint{break-inside:avoid!important;page-break-inside:avoid!important;margin-top:2mm!important}
+  .signaturePrint h2{font-size:10pt!important}
+  .signatureLine{height:9mm!important;margin:2mm 25% .5mm!important}
+  .signatureCaption{font-size:7pt!important}
+  .detailGallery + .signaturePrint{margin-top:3mm!important}
+}

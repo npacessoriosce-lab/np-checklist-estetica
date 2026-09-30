@@ -9,11 +9,6 @@ let booted = false;
 
 const $ = (id) => document.getElementById(id);
 const online = $("online");
-const sign = $("sign");
-const ctx = sign.getContext("2d");
-ctx.lineWidth = 3;
-ctx.lineCap = "round";
-ctx.lineJoin = "round";
 
 function esc(v) {
   return String(v ?? "").replace(/[&<>'"]/g, ch => ({
@@ -57,7 +52,6 @@ async function resetForm() {
   currentPhotos = [];
   $("photos").innerHTML = "";
   PHOTO_LABELS.forEach((label, i) => addPhotoSlot(label, i));
-  clearSign();
   setFields({});
   $("formTitle").textContent = "Novo checklist";
   $("saveBtn").textContent = "Finalizar checklist";
@@ -158,31 +152,6 @@ function saveMark() {
   closeModal();
 }
 
-function clearSign() { ctx.clearRect(0,0,sign.width,sign.height); }
-function signatureHasInk() {
-  return ctx.getImageData(0,0,sign.width,sign.height).data.some(v => v !== 0);
-}
-function drawSignatureImage(src) {
-  clearSign();
-  if (!src) return;
-  const img = new Image();
-  img.onload = () => {
-    const scale = Math.min(sign.width / img.width, sign.height / img.height);
-    const w = img.width * scale, h = img.height * scale;
-    ctx.drawImage(img, (sign.width-w)/2, (sign.height-h)/2, w, h);
-  };
-  img.src = src;
-}
-let drawing = false;
-function pointerPos(e) {
-  const r = sign.getBoundingClientRect();
-  return { x:(e.clientX-r.left)*sign.width/r.width, y:(e.clientY-r.top)*sign.height/r.height };
-}
-sign.addEventListener("pointerdown", e => { drawing=true; sign.setPointerCapture?.(e.pointerId); const p=pointerPos(e); ctx.beginPath(); ctx.moveTo(p.x,p.y); e.preventDefault(); });
-sign.addEventListener("pointermove", e => { if(!drawing)return; const p=pointerPos(e); ctx.lineTo(p.x,p.y); ctx.stroke(); e.preventDefault(); });
-sign.addEventListener("pointerup", () => drawing=false);
-sign.addEventListener("pointercancel", () => drawing=false);
-
 async function uploadBlob(blob, path) {
   const { error } = await sb.storage.from("checklist-files").upload(path, blob, { upsert:true, contentType:blob.type || "image/jpeg" });
   if (error) throw error;
@@ -247,12 +216,6 @@ async function saveFiles(id, editMode) {
       const { error } = await sb.from("checklist_marks").insert({photo_id:photoId,x:m.x,y:m.y,tipo:m.type,descricao:m.desc});
       if (error) throw error;
     }
-  }
-  if (signatureHasInk()) {
-    const blob = await new Promise(resolve => sign.toBlob(resolve,"image/png"));
-    await uploadBlob(blob, `${id}/assinatura.png`);
-    const { error } = await sb.from("checklists").update({assinatura_path:`${id}/assinatura.png`}).eq("id",id);
-    if (error) throw error;
   }
 }
 
@@ -332,6 +295,11 @@ async function openChecklist(id) {
     const {c,photos,marks} = await loadChecklist(id);
     const checked = c.itens_internos || [];
     let html = `
+      <div class="printHeader">
+        <img src="np-logo.jpg" alt="NP Acessórios Automotivos" class="printLogo">
+        <div class="printTitle"><strong>CHECKLIST DE ATENDIMENTO</strong><span>ENTRADA DO VEÍCULO</span></div>
+        <div class="printOs"><strong>OS ${osLabel(c.os_num)}</strong><span>${new Date(c.created_at).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"})}</span></div>
+      </div>
       <div class="detailHeader">
         <button type="button" class="secondary" data-action="back-list">← Voltar para OS</button>
         <div class="detailHeaderInfo"><div class="detailOs">OS ${osLabel(c.os_num)}</div><span class="status status-${esc(c.status||"aguardando")}">${esc(statusLabel(c.status||"aguardando"))}</span></div>
@@ -353,12 +321,7 @@ async function openChecklist(id) {
       html += `</div>`;
     }
     html += `</div></section>`;
-    if (c.assinatura_path) {
-      const {data:u} = sb.storage.from("checklist-files").getPublicUrl(c.assinatura_path);
-      html += `<section class="card detailCard"><h2>Assinatura do cliente</h2><img class="signatureImg" src="${u.publicUrl}" alt="Assinatura do cliente"></section>`;
-    } else {
-      html += `<section class="card detailCard"><h2>Assinatura do cliente</h2><p class="muted">Nenhuma assinatura registrada.</p></section>`;
-    }
+    html += `<section class="card detailCard signaturePrint"><h2>Assinatura do cliente</h2><div class="signatureLine"></div><div class="signatureCaption">Assinatura do cliente</div></section>`;
     html += `<div class="detailBottomActions"><button type="button" class="secondary" data-action="back-list">← Voltar</button><button type="button" class="secondary" data-action="print-pdf">▣ Exportar PDF</button><button type="button" class="primary" data-action="detail-edit" data-id="${esc(c.id)}">✎ Editar OS</button></div>`;
     $("detalheBox").innerHTML=html;
     show("detalhe");
@@ -386,8 +349,7 @@ async function editChecklist(id) {
     $("osNum").textContent=osLabel(c.os_num);
     $("saveBtn").textContent="Salvar alterações";
     $("saveBtn").disabled=false;
-    clearSign();
-    if (c.assinatura_path) {
+      if (c.assinatura_path) {
       const {data:u}=sb.storage.from("checklist-files").getPublicUrl(c.assinatura_path);
       drawSignatureImage(u.publicUrl);
     }
