@@ -166,38 +166,32 @@ function markImagePointer(e) {
   const img = $("modalImg");
   if (!wrap || !img || !img.naturalWidth || !img.naturalHeight) return;
 
-  // Use ONLY Pointer Events here. They provide clientX/clientY consistently
-  // for mouse, touch and stylus. The old touchstart handler could produce
-  // undefined coordinates and leave the modal in a broken state.
-  const clientX = Number(e.clientX);
-  const clientY = Number(e.clientY);
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
-
+  const wr = wrap.getBoundingClientRect();
   const ir = img.getBoundingClientRect();
-  const naturalW = img.naturalWidth;
-  const naturalH = img.naturalHeight;
 
-  // object-fit: contain: calculate the real visible image rectangle,
-  // excluding the black letterbox bars.
-  const scale = Math.min(ir.width / naturalW, ir.height / naturalH);
-  const contentW = naturalW * scale;
-  const contentH = naturalH * scale;
-  const contentLeft = ir.left + (ir.width - contentW) / 2;
-  const contentTop = ir.top + (ir.height - contentH) / 2;
+  // O elemento <img> usa object-fit: contain. Calculamos exatamente onde
+  // a imagem real está desenhada dentro da caixa preta.
+  const scale = Math.min(ir.width / img.naturalWidth, ir.height / img.naturalHeight);
+  const contentW = img.naturalWidth * scale;
+  const contentH = img.naturalHeight * scale;
+  const left = ir.left - wr.left + (ir.width - contentW) / 2;
+  const top = ir.top - wr.top + (ir.height - contentH) / 2;
 
-  // Ignore taps outside the actual photo instead of placing a marker in
-  // the black bars.
-  if (clientX < contentLeft || clientX > contentLeft + contentW ||
-      clientY < contentTop || clientY > contentTop + contentH) return;
+  let px = e.clientX - wr.left;
+  let py = e.clientY - wr.top;
+
+  // Se o toque cair fora da imagem real (nas barras pretas), não ignora o
+  // toque: aproxima para a borda da imagem. Dentro da foto, não altera nada.
+  px = Math.max(left, Math.min(left + contentW, px));
+  py = Math.max(top, Math.min(top + contentH, py));
 
   pendingPoint = {
-    x: Math.max(0, Math.min(100, ((clientX - contentLeft) / contentW) * 100)),
-    y: Math.max(0, Math.min(100, ((clientY - contentTop) / contentH) * 100))
+    x: Math.max(0, Math.min(100, ((px - left) / contentW) * 100)),
+    y: Math.max(0, Math.min(100, ((py - top) / contentH) * 100))
   };
 
   renderMarkers();
 }
-
 function saveMark() {
   if (activePhoto === null || !pendingPoint) return alert("Toque no ponto exato da avaria na foto.");
   currentPhotos[activePhoto].marks.push({ x:pendingPoint.x, y:pendingPoint.y, type:$("tipo").value, desc:$("desc").value.trim() });
@@ -448,9 +442,11 @@ $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
 const markArea = $("photoMarkWrap");
 const markImage = $("modalImg");
-// A single Pointer Events handler is used for mouse, touch and stylus.
-// This avoids the touchstart/click conflict that was freezing the modal.
-markArea.addEventListener("pointerdown", markImagePointer, {passive:false});
+// Captura em vários eventos para funcionar de forma consistente em Android,
+// iPhone e desktop, inclusive quando o navegador trata a imagem como elemento arrastável.
+markArea.addEventListener("pointerdown", markImagePointer, {passive:false, capture:true});
+markArea.addEventListener("touchstart", markImagePointer, {passive:false, capture:true});
+markArea.addEventListener("click", markImagePointer, {passive:false, capture:true});
 markImage.addEventListener("dragstart", e => e.preventDefault());
 markImage.addEventListener("load", () => { syncMarkerLayer(); renderMarkers(); });
 window.addEventListener("resize", () => { if (activePhoto !== null) { syncMarkerLayer(); renderMarkers(); } });
