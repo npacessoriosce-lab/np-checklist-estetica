@@ -131,73 +131,20 @@ function openMarkModal(index) {
   $("modal").classList.remove("hidden");
   $("modal").style.display = "flex";
 }
-function syncMarkerLayer() {
-  const wrap = $("photoMarkWrap");
-  const img = $("modalImg");
-  const layer = $("markers");
-  if (!wrap || !img || !layer || !img.naturalWidth || !img.naturalHeight) return null;
-  const wr = wrap.getBoundingClientRect();
-  const ir = img.getBoundingClientRect();
-  const iw = img.naturalWidth, ih = img.naturalHeight;
-  const boxW = ir.width, boxH = ir.height;
-  const scale = Math.min(boxW / iw, boxH / ih);
-  const contentW = iw * scale, contentH = ih * scale;
-  const left = (boxW - contentW) / 2;
-  const top = (boxH - contentH) / 2;
-  layer.style.left = `${ir.left - wr.left + left}px`;
-  layer.style.top = `${ir.top - wr.top + top}px`;
-  layer.style.width = `${contentW}px`;
-  layer.style.height = `${contentH}px`;
-  return {left: ir.left - wr.left + left, top: ir.top - wr.top + top, width: contentW, height: contentH};
-}
 function renderMarkers() {
   if (activePhoto === null || !currentPhotos[activePhoto]) return;
   const marks = currentPhotos[activePhoto].marks || [];
-  const layer = $("markers");
-  syncMarkerLayer();
-  layer.innerHTML = marks.map(m => `<span class="dot" style="left:${m.x}%;top:${m.y}%"></span>`).join("") + (pendingPoint ? `<span class="dot pending" style="left:${pendingPoint.x}%;top:${pendingPoint.y}%"></span>` : "");
+  $("markers").innerHTML = marks.map(m => `<span class="dot" style="left:${m.x}%;top:${m.y}%"></span>`).join("") + (pendingPoint ? `<span class="dot pending" style="left:${pendingPoint.x}%;top:${pendingPoint.y}%"></span>` : "");
 }
-function markImagePointer(e) {
+function markImageClick(e) {
   if (activePhoto === null) return;
-  if (e.cancelable) e.preventDefault();
-  if (e.stopPropagation) e.stopPropagation();
-
-  const wrap = $("photoMarkWrap");
   const img = $("modalImg");
-  if (!wrap || !img || !img.naturalWidth || !img.naturalHeight) return;
-
-  // Use ONLY Pointer Events here. They provide clientX/clientY consistently
-  // for mouse, touch and stylus. The old touchstart handler could produce
-  // undefined coordinates and leave the modal in a broken state.
-  const clientX = Number(e.clientX);
-  const clientY = Number(e.clientY);
-  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return;
-
-  const ir = img.getBoundingClientRect();
-  const naturalW = img.naturalWidth;
-  const naturalH = img.naturalHeight;
-
-  // object-fit: contain: calculate the real visible image rectangle,
-  // excluding the black letterbox bars.
-  const scale = Math.min(ir.width / naturalW, ir.height / naturalH);
-  const contentW = naturalW * scale;
-  const contentH = naturalH * scale;
-  const contentLeft = ir.left + (ir.width - contentW) / 2;
-  const contentTop = ir.top + (ir.height - contentH) / 2;
-
-  // Ignore taps outside the actual photo instead of placing a marker in
-  // the black bars.
-  if (clientX < contentLeft || clientX > contentLeft + contentW ||
-      clientY < contentTop || clientY > contentTop + contentH) return;
-
-  pendingPoint = {
-    x: Math.max(0, Math.min(100, ((clientX - contentLeft) / contentW) * 100)),
-    y: Math.max(0, Math.min(100, ((clientY - contentTop) / contentH) * 100))
-  };
-
+  const r = img.getBoundingClientRect();
+  const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
+  const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
+  pendingPoint = { x, y };
   renderMarkers();
 }
-
 function saveMark() {
   if (activePhoto === null || !pendingPoint) return alert("Toque no ponto exato da avaria na foto.");
   currentPhotos[activePhoto].marks.push({ x:pendingPoint.x, y:pendingPoint.y, type:$("tipo").value, desc:$("desc").value.trim() });
@@ -402,7 +349,11 @@ async function editChecklist(id) {
     $("osNum").textContent=osLabel(c.os_num);
     $("saveBtn").textContent="Salvar alterações";
     $("saveBtn").disabled=false;
-      show("novo");
+      if (c.assinatura_path) {
+      const {data:u}=sb.storage.from("checklist-files").getPublicUrl(c.assinatura_path);
+      drawSignatureImage(u.publicUrl);
+    }
+    show("novo");
   } catch(e) { alert("Erro ao carregar a OS para edição: "+(e.message||e)); }
 }
 window.editarChecklist=editChecklist;
@@ -446,14 +397,7 @@ $("saveBtn").addEventListener("click",finalizeChecklist);
 $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
-const markArea = $("photoMarkWrap");
-const markImage = $("modalImg");
-// A single Pointer Events handler is used for mouse, touch and stylus.
-// This avoids the touchstart/click conflict that was freezing the modal.
-markArea.addEventListener("pointerdown", markImagePointer, {passive:false});
-markImage.addEventListener("dragstart", e => e.preventDefault());
-markImage.addEventListener("load", () => { syncMarkerLayer(); renderMarkers(); });
-window.addEventListener("resize", () => { if (activePhoto !== null) { syncMarkerLayer(); renderMarkers(); } });
+$("modalImg").addEventListener("click",markImageClick);
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
 
