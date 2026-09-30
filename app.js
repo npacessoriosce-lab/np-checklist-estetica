@@ -137,13 +137,21 @@ function renderMarkers() {
   $("markers").innerHTML = marks.map(m => `<span class="dot" style="left:${m.x}%;top:${m.y}%"></span>`).join("") + (pendingPoint ? `<span class="dot pending" style="left:${pendingPoint.x}%;top:${pendingPoint.y}%"></span>` : "");
 }
 function markImageClick(e) {
-  if (activePhoto === null) return;
+  if (activePhoto === null || !currentPhotos[activePhoto]) return;
   const img = $("modalImg");
+  if (!img || !img.naturalWidth) return;
   const r = img.getBoundingClientRect();
+  if (!r.width || !r.height) return;
   const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
   const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
   pendingPoint = { x, y };
   renderMarkers();
+}
+
+function markImagePointer(e) {
+  // Pointer events make marking reliable on Android/iPhone and desktop.
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  markImageClick(e);
 }
 function saveMark() {
   if (activePhoto === null || !pendingPoint) return alert("Toque no ponto exato da avaria na foto.");
@@ -349,11 +357,7 @@ async function editChecklist(id) {
     $("osNum").textContent=osLabel(c.os_num);
     $("saveBtn").textContent="Salvar alterações";
     $("saveBtn").disabled=false;
-      if (c.assinatura_path) {
-      const {data:u}=sb.storage.from("checklist-files").getPublicUrl(c.assinatura_path);
-      drawSignatureImage(u.publicUrl);
-    }
-    show("novo");
+      show("novo");
   } catch(e) { alert("Erro ao carregar a OS para edição: "+(e.message||e)); }
 }
 window.editarChecklist=editChecklist;
@@ -398,6 +402,8 @@ $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
 $("modalImg").addEventListener("click",markImageClick);
+$("modalImg").addEventListener("pointerdown",markImagePointer);
+$("modalImg").style.touchAction = "none";
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
 
