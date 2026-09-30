@@ -134,28 +134,53 @@ function openMarkModal(index) {
 function renderMarkers() {
   if (activePhoto === null || !currentPhotos[activePhoto]) return;
   const marks = currentPhotos[activePhoto].marks || [];
-  $("markers").innerHTML = marks.map(m => `<span class="dot" style="left:${m.x}%;top:${m.y}%"></span>`).join("") + (pendingPoint ? `<span class="dot pending" style="left:${pendingPoint.x}%;top:${pendingPoint.y}%"></span>` : "");
-}
-function markImageClick(e) {
-  if (activePhoto === null || !currentPhotos[activePhoto]) return;
   const img = $("modalImg");
-  if (!img || !img.naturalWidth) return;
+  const markers = $("markers");
+  if (!img || !markers) return;
+  const place = (m, extra="") => {
+    const x = (Number(m.x) / 100) * img.clientWidth;
+    const y = (Number(m.y) / 100) * img.clientHeight;
+    return `<span class="dot ${extra}" style="left:${x}px;top:${y}px"></span>`;
+  };
+  markers.innerHTML = marks.map(m => place(m)).join("") + (pendingPoint ? place(pendingPoint,"pending") : "");
+}
+
+function pointFromEvent(e) {
+  if (activePhoto === null || !currentPhotos[activePhoto]) return null;
+  const img = $("modalImg");
+  if (!img || !img.naturalWidth || !img.clientWidth || !img.clientHeight) return null;
   const r = img.getBoundingClientRect();
-  if (!r.width || !r.height) return;
-  const x = Math.max(0, Math.min(100, ((e.clientX - r.left) / r.width) * 100));
-  const y = Math.max(0, Math.min(100, ((e.clientY - r.top) / r.height) * 100));
-  pendingPoint = { x, y };
-  renderMarkers();
+  const px = e.clientX;
+  const py = e.clientY;
+  if (px < r.left || px > r.right || py < r.top || py > r.bottom) return null;
+  return {
+    x: Math.max(0, Math.min(100, ((px - r.left) / r.width) * 100)),
+    y: Math.max(0, Math.min(100, ((py - r.top) / r.height) * 100))
+  };
 }
 
 function markImagePointer(e) {
-  // Pointer events make marking reliable on Android/iPhone and desktop.
   if (e.pointerType === "mouse" && e.button !== 0) return;
-  markImageClick(e);
+  const point = pointFromEvent(e);
+  if (!point) return;
+  e.preventDefault();
+  pendingPoint = point;
+  renderMarkers();
 }
+
 function saveMark() {
-  if (activePhoto === null || !pendingPoint) return alert("Toque no ponto exato da avaria na foto.");
-  currentPhotos[activePhoto].marks.push({ x:pendingPoint.x, y:pendingPoint.y, type:$("tipo").value, desc:$("desc").value.trim() });
+  if (activePhoto === null || !pendingPoint) {
+    alert("Toque na foto, exatamente no ponto da avaria.");
+    return;
+  }
+  const p = currentPhotos[activePhoto];
+  p.marks = p.marks || [];
+  p.marks.push({
+    x: Number(pendingPoint.x),
+    y: Number(pendingPoint.y),
+    type: $("tipo").value,
+    desc: $("desc").value.trim()
+  });
   renderPhoto(activePhoto);
   closeModal();
 }
@@ -402,7 +427,9 @@ $("clearSignBtn").addEventListener("click",clearSign);
 $("closeModalBtn").addEventListener("click",closeModal);
 $("saveMarkBtn").addEventListener("click",saveMark);
 $("modalImg").addEventListener("click",markImageClick);
+$("photoMarkWrap").addEventListener("pointerdown",markImagePointer);
 $("modalImg").addEventListener("pointerdown",markImagePointer);
+window.addEventListener("resize",()=>{ if(!$("modal").classList.contains("hidden")) renderMarkers(); });
 $("modalImg").style.touchAction = "none";
 $("busca").addEventListener("input",renderLista);
 $("modal").addEventListener("click",e=>{if(e.target===$("modal"))closeModal();});
